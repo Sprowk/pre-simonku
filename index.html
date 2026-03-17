@@ -2,7 +2,8 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#87CEEB">
     <title>Pre Simonku ❤️</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +15,16 @@
         <h1>Pre moju Simonku</h1>
         <p class="subtitle">Každý deň jedno malé prekvapenie...</p>
     </header>
+
+    <!-- ===== AUDIO ELEMENTS ===== -->
+    <audio id="bg-audio" loop preload="none"><source src="audio/bg.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-0" loop preload="none"><source src="audio/0_unicorn.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-1" loop preload="none"><source src="audio/1_bee.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-2" loop preload="none"><source src="audio/2_octopus.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-3" loop preload="none"><source src="audio/3_cat.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-4" loop preload="none"><source src="audio/4_sun.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-5" loop preload="none"><source src="audio/5_owl.mp3" type="audio/mpeg"></audio>
+    <audio id="scene-audio-6" loop preload="none"><source src="audio/6_penguin.mp3" type="audio/mpeg"></audio>
 
     <!-- ===== INTERACTIVE MAP ===== -->
     <div class="map-viewport" id="map-viewport">
@@ -306,8 +317,16 @@
             </div>
         </div>
 
-        <!-- Zoom controls — outside canvas so they don't transform -->
+        <!-- Controls — outside canvas so they don't transform -->
         <div class="zoom-controls" id="zoom-controls">
+            <button class="zoom-btn muted" id="audio-toggle" aria-label="Prepnúť zvuk">
+                <!-- Speaker Icon -->
+                <svg class="icon-speaker" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path class="icon-waves" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <line class="icon-mute-line" x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+            </button>
             <button class="zoom-btn" id="zoom-in" aria-label="Priblížiť">+</button>
             <button class="zoom-btn" id="zoom-out" aria-label="Oddialiť">−</button>
             <button class="zoom-btn zoom-btn-home" id="zoom-home" aria-label="Reset">⌂</button>

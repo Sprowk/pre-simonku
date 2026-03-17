@@ -19,7 +19,8 @@ html { scroll-behavior: smooth; }
 
 body {
     font-family: var(--font-body);
-    background: #4CAF50;
+    /* Gradient from Sky Blue (#87CEEB) to Grass Green (#2E7D32) */
+    background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 50%, #2E7D32 50%, #2E7D32 100%);
     color: var(--text);
     height: 100vh;
     height: 100dvh;
@@ -32,7 +33,7 @@ body {
 /* ===== HEADER (overlay on map) ===== */
 header {
     text-align: center;
-    padding: 0.8rem 1.5rem 0.4rem;
+    padding: calc(0.8rem + env(safe-area-inset-top)) 1.5rem 0.4rem;
     position: absolute;
     top: 0;
     left: 0;
@@ -314,6 +315,25 @@ h1 {
     margin-top: 2px;
 }
 
+/* Audio Button SVG */
+.icon-speaker {
+    display: block;
+    margin-left: -1px; /* Optical adjustment */
+}
+
+.icon-speaker .icon-mute-line {
+    display: none;
+    stroke: #ff6f91;
+}
+
+.zoom-btn.muted .icon-speaker .icon-waves {
+    display: none;
+}
+
+.zoom-btn.muted .icon-speaker .icon-mute-line {
+    display: block;
+}
+
 /* ===== SLIDE HINTS (mobile) ===== */
 .slide-hint {
     position: absolute;
@@ -475,7 +495,7 @@ h1 {
 /* ===== FOOTER (overlay bottom) ===== */
 footer {
     position: absolute;
-    bottom: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     text-align: center;

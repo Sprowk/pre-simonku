@@ -89,6 +89,13 @@ class MapCamera {
         this.pinchMidX = 0;
         this.pinchMidY = 0;
 
+        // Inertia state
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.lastTime = 0;
+        this.inertiaId = null;
+        this.friction = 0.95; // Higher = more slide
+
         this._bind();
     }
 
@@ -236,6 +243,7 @@ class MapCamera {
     }
 
     _animateTo(tx, ty, ts, dur) {
+        this.stopInertia();
         if (this.animId) cancelAnimationFrame(this.animId);
         const sx = this.x, sy = this.y, ss = this.scale;
         const t0 = performance.now();
@@ -253,6 +261,34 @@ class MapCamera {
         this.animId = requestAnimationFrame(step);
     }
 
+    /* ---------- inertia ---------- */
+    stopInertia() {
+        if (this.inertiaId) {
+            cancelAnimationFrame(this.inertiaId);
+            this.inertiaId = null;
+        }
+    }
+
+    startInertia() {
+        this.stopInertia();
+        const step = () => {
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+            this.velocityX *= this.friction;
+            this.velocityY *= this.friction;
+
+            this.clamp();
+            this.apply();
+
+            if (Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1) {
+                this.inertiaId = requestAnimationFrame(step);
+            } else {
+                this.inertiaId = null;
+            }
+        };
+        this.inertiaId = requestAnimationFrame(step);
+    }
+
     /* ---------- event binding ---------- */
     _bind() {
         // Wheel zoom
@@ -266,22 +302,43 @@ class MapCamera {
         // Mouse drag
         this.vp.addEventListener('mousedown', e => {
             if (e.target.closest('.day-marker,.zoom-btn')) return;
+            this.stopInertia();
             this.dragging = true;
             this.dragStartX = e.clientX - this.x;
             this.dragStartY = e.clientY - this.y;
+            this.lastTime = performance.now();
+            this.velocityX = 0;
+            this.velocityY = 0;
         });
         window.addEventListener('mousemove', e => {
             if (!this.dragging) return;
-            this.x = e.clientX - this.dragStartX;
-            this.y = e.clientY - this.dragStartY;
+            const now = performance.now();
+            const dt = now - this.lastTime;
+            const nextX = e.clientX - this.dragStartX;
+            const nextY = e.clientY - this.dragStartY;
+
+            if (dt > 0) {
+                this.velocityX = (nextX - this.x) / (dt / 16);
+                this.velocityY = (nextY - this.y) / (dt / 16);
+            }
+
+            this.x = nextX;
+            this.y = nextY;
+            this.lastTime = now;
             this.clamp();
             this.apply();
         });
-        window.addEventListener('mouseup', () => { this.dragging = false; });
+        window.addEventListener('mouseup', () => {
+            if (this.dragging) {
+                this.dragging = false;
+                this.startInertia();
+            }
+        });
 
         // Touch: pinch + drag
         this.vp.addEventListener('touchstart', e => {
             if (e.target.closest('.day-marker,.zoom-btn')) return;
+            this.stopInertia();
             if (e.touches.length === 2) {
                 e.preventDefault();
                 this.pinching = true;
@@ -295,6 +352,9 @@ class MapCamera {
                 this.dragging = true;
                 this.dragStartX = e.touches[0].clientX - this.x;
                 this.dragStartY = e.touches[0].clientY - this.y;
+                this.lastTime = performance.now();
+                this.velocityX = 0;
+                this.velocityY = 0;
             }
         }, { passive: false });
 
@@ -310,8 +370,19 @@ class MapCamera {
                 this.zoomAt(mx, my, ns);
             } else if (e.touches.length === 1 && this.dragging) {
                 e.preventDefault();
-                this.x = e.touches[0].clientX - this.dragStartX;
-                this.y = e.touches[0].clientY - this.dragStartY;
+                const now = performance.now();
+                const dt = now - this.lastTime;
+                const nextX = e.touches[0].clientX - this.dragStartX;
+                const nextY = e.touches[0].clientY - this.dragStartY;
+
+                if (dt > 0) {
+                    this.velocityX = (nextX - this.x) / (dt / 16);
+                    this.velocityY = (nextY - this.y) / (dt / 16);
+                }
+
+                this.x = nextX;
+                this.y = nextY;
+                this.lastTime = now;
                 this.clamp();
                 this.apply();
             }
@@ -319,12 +390,20 @@ class MapCamera {
 
         this.vp.addEventListener('touchend', e => {
             if (e.touches.length < 2) this.pinching = false;
-            if (e.touches.length === 0) this.dragging = false;
+            if (e.touches.length === 0) {
+                if (this.dragging) {
+                    this.dragging = false;
+                    this.startInertia();
+                }
+            }
             // When going from 2 fingers to 1, reset drag origin
             if (e.touches.length === 1 && !this.pinching) {
                 this.dragging = true;
                 this.dragStartX = e.touches[0].clientX - this.x;
                 this.dragStartY = e.touches[0].clientY - this.y;
+                this.lastTime = performance.now();
+                this.velocityX = 0;
+                this.velocityY = 0;
             }
         });
     }
@@ -447,6 +526,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5500);
     }
 
+    // --- Audio System ---
+    const audioToggle = document.getElementById('audio-toggle');
+    const bgAudio = document.getElementById('bg-audio');
+    let isAudioEnabled = false;
+    let currentSceneAudio = null;
+    let hasInteractedForAudio = false;
+
+    bgAudio.volume = 0;
+
+    function fadeAudio(audioEl, targetVol, duration = 1000) {
+        if (!audioEl) return;
+        if (audioEl._fadeInterval) clearInterval(audioEl._fadeInterval);
+
+        const startVol = audioEl.volume;
+        const steps = 25;
+        const stepTime = duration / steps;
+        const volStep = (targetVol - startVol) / steps;
+
+        if (targetVol > 0 && audioEl.paused) {
+            audioEl.volume = 0;
+            audioEl.play().catch(e => console.log('Audio autoplay blocked', e));
+        }
+
+        let currentStep = 0;
+        audioEl._fadeInterval = setInterval(() => {
+            currentStep++;
+            let newVol = startVol + (volStep * currentStep);
+            if (newVol > 1) newVol = 1;
+            if (newVol < 0) newVol = 0;
+            audioEl.volume = newVol;
+
+            if (currentStep >= steps) {
+                clearInterval(audioEl._fadeInterval);
+                audioEl.volume = targetVol;
+                if (targetVol === 0) audioEl.pause();
+            }
+        }, stepTime);
+    }
+
+    function getTargetSceneVolume(audioEl) {
+        if (!audioEl) return 0.4;
+        // Day 4 is the Sun scene
+        if (audioEl.id === 'scene-audio-4') return 1.0;
+        return 0.4; // make other days quieter (from 0.8 to 0.4)
+    }
+
+    audioToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hasInteractedForAudio = true;
+        isAudioEnabled = !isAudioEnabled;
+        
+        if (isAudioEnabled) {
+            audioToggle.classList.remove('muted');
+            if (modal.classList.contains('hidden')) {
+                fadeAudio(bgAudio, 0.4, 800);
+            } else if (currentSceneAudio) {
+                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 800);
+            }
+        } else {
+            audioToggle.classList.add('muted');
+            fadeAudio(bgAudio, 0, 500);
+            if (currentSceneAudio) fadeAudio(currentSceneAudio, 0, 500);
+            // Explicitly pause after fade
+            setTimeout(() => {
+                bgAudio.pause();
+                if (currentSceneAudio) currentSceneAudio.pause();
+            }, 600);
+        }
+    });
+
+    // Auto-enable audio on first user interaction anywhere if not explicitly muted/unmuted yet
+    function handleFirstInteraction() {
+        if (!hasInteractedForAudio) {
+            hasInteractedForAudio = true;
+            isAudioEnabled = true;
+            audioToggle.classList.remove('muted');
+            if (modal.classList.contains('hidden')) {
+                fadeAudio(bgAudio, 0.4, 1000);
+            } else if (currentSceneAudio) {
+                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 1000);
+            }
+        }
+        document.removeEventListener('click', handleFirstInteraction);
+        document.removeEventListener('touchstart', handleFirstInteraction);
+    }
+    document.addEventListener('click', handleFirstInteraction, { once: true });
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+
     // --- Modal ---
     function openModal(dayNum) {
         const data = surprises[dayNum];
@@ -456,11 +623,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const sceneFn = scenes[data.scene];
         sceneContainer.innerHTML = sceneFn ? sceneFn() : '';
         modal.classList.remove('hidden');
+
+        // Audio logic
+        currentSceneAudio = document.getElementById(`scene-audio-${dayNum}`);
+        
+        // Safety: pause any other scene audios
+        document.querySelectorAll('audio[id^="scene-audio-"]').forEach(audio => {
+            if (audio !== currentSceneAudio) {
+                fadeAudio(audio, 0, 300);
+                setTimeout(() => {
+                    if (audio.volume === 0) audio.pause();
+                }, 350);
+            }
+        });
+
+        if (isAudioEnabled) {
+            fadeAudio(bgAudio, 0.0, 1500); // Fade out bg slowly
+            if (currentSceneAudio) {
+                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 1000); // Fade in scene music
+            }
+        }
     }
 
     function closeModal() {
         modal.classList.add('hidden');
         setTimeout(() => { sceneContainer.innerHTML = ''; }, 500);
+
+        // Audio logic
+        if (isAudioEnabled) {
+            fadeAudio(bgAudio, 0.4, 1500); // Fade bg back in
+            if (currentSceneAudio) {
+                fadeAudio(currentSceneAudio, 0, 800);
+            }
+        } else {
+            if (currentSceneAudio) fadeAudio(currentSceneAudio, 0, 300);
+        }
+        
+        // Ensure paused
+        const audioToPause = currentSceneAudio;
+        setTimeout(() => {
+            if (audioToPause && audioToPause.volume === 0) audioToPause.pause();
+        }, 850);
+        
+        currentSceneAudio = null;
     }
 
     closeBtn.addEventListener('click', closeModal);
