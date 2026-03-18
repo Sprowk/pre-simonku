@@ -521,8 +521,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('zoom-out').addEventListener('click', () => cam.zoomOut());
     document.getElementById('zoom-home').addEventListener('click', () => cam.resetHome(activeMarker));
 
-    // --- Cinematic fly-in on load ---
-    setTimeout(() => cam.flyIn(activeMarker, 400), 100);
+    // --- Cinematic fly-in + Intro sequence ---
+    const flyInOnStart = () => {
+        setTimeout(() => cam.flyIn(activeMarker, 400), 100);
+    };
+
+    // --- Intro Logic ---
+    const introOverlay = document.getElementById('intro-overlay');
+    const enterBtn = document.getElementById('enter-btn');
+
+    enterBtn.addEventListener('click', () => {
+        // 1. Hide intro
+        introOverlay.classList.add('hidden');
+        
+        // 2. Start Music (This is the required user interaction!)
+        isAudioEnabled = true;
+        hasInteractedForAudio = true;
+        audioToggle.classList.remove('muted');
+        
+        console.log('Intro click: Starting audio and fly-in');
+        if (modal.classList.contains('hidden')) {
+            fadeAudio(bgAudio, 0.4, 1500);
+        }
+
+        // 3. Start Camera Animation
+        flyInOnStart();
+
+        // 4. Cleanup intro element after fade
+        setTimeout(() => introOverlay.remove(), 1500);
+    });
+
+    // Remove the old automatic fly-in (we moved it to the btn click)
+    // Removed: setTimeout(() => cam.flyIn(activeMarker, 400), 100);
 
     // --- Slide hints (mobile) ---
     const hintL = document.getElementById('hint-left');
@@ -544,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Audio System ---
     const audioToggle = document.getElementById('audio-toggle');
     const bgAudio = document.getElementById('bg-audio');
-    let isAudioEnabled = false;
+    let isAudioEnabled = true;
     let currentSceneAudio = null;
     let hasInteractedForAudio = false;
 
@@ -561,7 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (targetVol > 0 && audioEl.paused) {
             audioEl.volume = 0;
-            audioEl.play().catch(e => console.log('Audio autoplay blocked', e));
+            console.log(`Playing audio: ${audioEl.id}`);
+            audioEl.play().then(() => {
+                console.log(`Successfully started playing: ${audioEl.id}`);
+            }).catch(e => {
+                console.warn(`Audio autoplay blocked or failed for ${audioEl.id}:`, e);
+            });
         }
 
         let currentStep = 0;
@@ -611,23 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Auto-enable audio on first user interaction anywhere if not explicitly muted/unmuted yet
-    function handleFirstInteraction() {
-        if (!hasInteractedForAudio) {
-            hasInteractedForAudio = true;
-            isAudioEnabled = true;
-            audioToggle.classList.remove('muted');
-            if (modal.classList.contains('hidden')) {
-                fadeAudio(bgAudio, 0.4, 1000);
-            } else if (currentSceneAudio) {
-                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 1000);
-            }
-        }
-        document.removeEventListener('click', handleFirstInteraction);
-        document.removeEventListener('touchstart', handleFirstInteraction);
-    }
-    document.addEventListener('click', handleFirstInteraction, { once: true });
-    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    // Audio System initialization...
+
 
     // --- Modal ---
     function openModal(dayNum) {

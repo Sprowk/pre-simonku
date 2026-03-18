@@ -21,43 +21,60 @@
         <p class="subtitle">Každý deň jedno malé prekvapenie...</p>
     </header>
 
+    <!-- ===== INTRO OVERLAY ===== -->
+    <div id="intro-overlay" class="intro-overlay">
+        <div class="intro-content">
+            <div class="intro-heart">
+                <svg viewBox="0 0 100 100" width="80" height="80">
+                    <path d="M50 88 C50 88 15 60 15 35 C15 20 28 10 40 15 C46 18 50 25 50 25 C50 25 54 18 60 15 C72 10 85 20 85 35 C85 60 50 88 50 88 Z" 
+                          fill="#ff6f91" stroke="#5D4037" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Highlight -->
+                    <path d="M28 35 C28 25 35 20 38 22" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="intro-title">Pre moju Simonku</h2>
+            <p class="intro-text">Pripravil som pre teba malé digitálne dobrodružstvo plné prekvapení.</p>
+            <button id="enter-btn" class="enter-btn">Vstúpiť do rozprávky</button>
+        </div>
+    </div>
+
     <!-- ===== AUDIO ELEMENTS ===== -->
-    <audio id="bg-audio" loop preload="none">
+    <audio id="bg-audio" loop preload="auto">
         <source src="audio/bg.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 0: Nedeľa - Tučniačik -->
-    <audio id="scene-audio-0" loop preload="none">
+    <audio id="scene-audio-0" loop preload="auto">
         <source src="audio/6_penguin.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 1: Pondelok - Kočka -->
-    <audio id="scene-audio-1" loop preload="none">
+    <audio id="scene-audio-1" loop preload="auto">
         <source src="audio/3_cat.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 2: Utorok - Slnko -->
-    <audio id="scene-audio-2" loop preload="none">
+    <audio id="scene-audio-2" loop preload="auto">
         <source src="audio/4_sun.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 3: Streda - Chobotnica -->
-    <audio id="scene-audio-3" loop preload="none">
+    <audio id="scene-audio-3" loop preload="auto">
         <source src="audio/2_octopus.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 4: Štvrtok - Včielka -->
-    <audio id="scene-audio-4" loop preload="none">
+    <audio id="scene-audio-4" loop preload="auto">
         <source src="audio/1_bee.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 5: Piatok - Sovička -->
-    <audio id="scene-audio-5" loop preload="none">
+    <audio id="scene-audio-5" loop preload="auto">
         <source src="audio/5_owl.mp3" type="audio/mpeg">
     </audio>
 
     <!-- 6: Sobota - Jednorožec -->
-    <audio id="scene-audio-6" loop preload="none">
+    <audio id="scene-audio-6" loop preload="auto">
         <source src="audio/0_unicorn.mp3" type="audio/mpeg">
     </audio>
     <!-- ===== INTERACTIVE MAP ===== -->
@@ -403,7 +420,7 @@
 
         <!-- Controls — outside canvas so they don't transform -->
         <div class="zoom-controls" id="zoom-controls">
-            <button class="zoom-btn muted" id="audio-toggle" aria-label="Prepnúť zvuk">
+            <button class="zoom-btn" id="audio-toggle" aria-label="Prepnúť zvuk">
                 <!-- Speaker Icon -->
                 <svg class="icon-speaker" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor"
                     stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
