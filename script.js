@@ -497,12 +497,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Marker logic ---
     let activeMarker = null;
+    const now = new Date();
+    const currentWeekDay = today === 0 ? 7 : today;
+
+    // The event sequence maps Monday-Sunday (1-7) to Wednesday-Tuesday (0-6)
+    // Wed=0, Thu=1, Fri=2, Sat=3, Sun=4, Mon=5, Tue=6
+    function getEventOffset(d) {
+        return (d + 4) % 7;
+    }
+
+    const currentOffset = getEventOffset(currentWeekDay);
+
+    // After Tuesday March 24, 2026, everything is unlocked forever.
+    // Date months are 0-indexed (2 = March). Let's use string parsing safely.
+    const isFinished = now.getTime() >= new Date('2026-03-24T00:00:00').getTime();
+
     markers.forEach(marker => {
         const dayNum = parseInt(marker.dataset.day);
-        if (dayNum === today || isTestMode) {
+        const markerWeekDay = dayNum === 0 ? 7 : dayNum;
+        const markerOffset = getEventOffset(markerWeekDay);
+
+        // Unlock if it's past the finish date, OR if the marker is on/before the current specific offset day
+        if (isFinished || markerOffset <= currentOffset || isTestMode) {
             marker.classList.remove('locked');
             marker.classList.add('unlocked');
-            if (!activeMarker) activeMarker = marker;
+            
+            // Set activeMarker to strictly today, so camera flies there
+            if (dayNum === today) {
+                activeMarker = marker; 
+            }
+        }
+
+        // If today is unlocked but we haven't found it yet (e.g. test mode), fallback to first unlocked
+        if (isTestMode && !activeMarker) {
+             activeMarker = marker;
         }
 
         marker.addEventListener('click', e => {
