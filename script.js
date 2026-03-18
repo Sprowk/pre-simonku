@@ -701,9 +701,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (isAudioEnabled) {
-            fadeAudio(bgAudio, 0.0, 1500); // Fade out bg slowly
+            fadeAudio(bgAudio, 0.0, 300); // Fade out bg quickly
             if (currentSceneAudio) {
-                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 1000); // Fade in scene music
+                fadeAudio(currentSceneAudio, getTargetSceneVolume(currentSceneAudio), 300); // Fade in scene music
             }
         }
     }
@@ -714,9 +714,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Audio logic
         if (isAudioEnabled) {
-            fadeAudio(bgAudio, 0.4, 1500); // Fade bg back in
+            fadeAudio(bgAudio, 0.4, 300); // Fade bg back in quickly
             if (currentSceneAudio) {
-                fadeAudio(currentSceneAudio, 0, 800);
+                fadeAudio(currentSceneAudio, 0, 300);
             }
         } else {
             if (currentSceneAudio) fadeAudio(currentSceneAudio, 0, 300);
@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const audioToPause = currentSceneAudio;
         setTimeout(() => {
             if (audioToPause && audioToPause.volume === 0) audioToPause.pause();
-        }, 850);
+        }, 350);
 
         currentSceneAudio = null;
     }
